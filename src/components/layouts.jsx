@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import {
-  Play, Pause, RotateCcw, LineChart, List, Newspaper, Wallet, Globe, DollarSign, Briefcase, History, Search, Settings2,
+  Play, Pause, RotateCcw, LineChart, List, Newspaper, Wallet, Globe, DollarSign, Briefcase, History, Search, Settings2, HelpCircle,
 } from 'lucide-react';
+import { useHelp, Term } from './help';
 import {
   Card, PortfolioSummary, HoldingsList, TradeHistory, StockBrowser, StockHeader, PriceChart, TradePanel, NewsFeed,
   MarginBar, IndexTicker, yen, signedYen, signed, upDown,
@@ -51,6 +52,7 @@ const TABS = [
 ];
 
 export function MobileLayout(g) {
+  const { openHelp } = useHelp();
   const [tab, setTab] = useState('chart');
   const [seenNews, setSeenNews] = useState(0);
   const unread = tab === 'news' ? 0 : Math.max(0, g.newsCount - seenNews);
@@ -84,6 +86,9 @@ export function MobileLayout(g) {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => openHelp()} aria-label="ヘルプ" className="p-2.5 bg-slate-800 rounded-xl text-gray-300">
+              <HelpCircle size={18} />
+            </button>
             <button onClick={() => confirmReset(g.onReset)} aria-label="リセット" className="p-2.5 bg-slate-800 rounded-xl text-gray-300">
               <RotateCcw size={18} />
             </button>
@@ -153,7 +158,7 @@ export function MobileLayout(g) {
 
         {tab === 'news' && (
           <>
-            <h2 className="text-lg font-bold">ニュース速報</h2>
+            <h2 className="text-lg font-bold"><Term k="news">ニュース速報</Term></h2>
             <NewsFeed news={g.news} holdings={g.portfolio.holdings} />
           </>
         )}
@@ -174,6 +179,12 @@ export function MobileLayout(g) {
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-slate-700 text-sm text-gray-400"
             >
               <Settings2 size={16} />難易度を選び直す
+            </button>
+            <button
+              onClick={() => openHelp()}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-slate-700 text-sm text-gray-400"
+            >
+              <HelpCircle size={16} />ヘルプ（遊び方・用語集・Q&A）
             </button>
           </>
         )}
@@ -208,6 +219,7 @@ export function MobileLayout(g) {
 // ================= PC用 =================
 
 export function DesktopLayout(g) {
+  const { openHelp } = useHelp();
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-gray-100">
       <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800">
@@ -225,17 +237,20 @@ export function DesktopLayout(g) {
           </div>
           <div className="flex items-center gap-6">
             <div className="text-right tabular-nums">
-              <div className="text-xs text-gray-400">純資産</div>
+              <div className="text-xs text-gray-400"><Term k="equity">純資産</Term></div>
               <div className="text-lg font-bold leading-tight">{yen(g.summary.equity)}</div>
             </div>
             <div className="text-right tabular-nums">
-              <div className="text-xs text-gray-400">トータル損益</div>
+              <div className="text-xs text-gray-400"><Term k="pnl">トータル損益</Term></div>
               <div className={`text-lg font-bold leading-tight ${upDown(g.summary.pnl)}`}>{signedYen(g.summary.pnl)}</div>
             </div>
             <div className="flex items-center gap-2">
               <RunButton isRunning={g.isRunning} onStart={g.onStart} onStop={g.onStop} large />
               <button onClick={() => confirmReset(g.onReset)} className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-semibold transition">
                 <RotateCcw size={16} />リセット
+              </button>
+              <button onClick={() => openHelp()} className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-semibold transition">
+                <HelpCircle size={16} />ヘルプ
               </button>
             </div>
           </div>
@@ -275,7 +290,7 @@ export function DesktopLayout(g) {
         </main>
 
         <aside className="col-span-3 space-y-4">
-          <Card title="ニュース速報" icon={Globe}>
+          <Card title={<Term k="news">ニュース速報</Term>} icon={Globe}>
             <div className="max-h-[420px] overflow-y-auto pr-1">
               <NewsFeed news={g.news} holdings={g.portfolio.holdings} />
             </div>

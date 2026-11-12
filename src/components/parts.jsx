@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { LOT_SIZE } from '../engine/data';
 import { tradeFee } from '../engine/portfolio';
+import { Term } from './help';
 
 // ---------- 小さな共通部品 ----------
 
@@ -44,7 +45,7 @@ function Row({ label, children, border }) {
 export function IndexTicker({ index, className = '' }) {
   return (
     <div className={`flex items-baseline gap-2 tabular-nums ${className}`}>
-      <span className="text-xs text-gray-400">道場平均</span>
+      <Term k="index" className="text-xs text-gray-400">道場平均</Term>
       <span className="font-bold">{index.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
       <span className={`text-xs font-semibold ${upDown(index.change)}`}>{signed(index.change)}%</span>
     </div>
@@ -59,29 +60,29 @@ export function PortfolioSummary({ portfolio, summary, mode }) {
       : summary.marginRatio >= mode.losscutThreshold ? 'text-orange-400' : 'text-red-400';
   return (
     <div className="space-y-2 text-sm">
-      <Row label="純資産">
+      <Row label={<Term k="equity">純資産</Term>}>
         <span className={`text-base font-bold ${summary.equity >= 0 ? 'text-white' : 'text-red-400'}`}>{yen(summary.equity)}</span>
       </Row>
-      <Row label="トータル損益">
+      <Row label={<Term k="pnl">トータル損益</Term>}>
         <span className={upDown(summary.pnl)}>
           {signedYen(summary.pnl)}
           <span className="text-xs ml-1">({signed(summary.pnlPercent)}%)</span>
         </span>
       </Row>
-      <Row label="　うち含み損益"><span className={upDown(summary.unrealizedPnl)}>{signedYen(summary.unrealizedPnl)}</span></Row>
-      <Row label="　うち確定損益"><span className={upDown(portfolio.realizedPnl)}>{signedYen(portfolio.realizedPnl)}</span></Row>
+      <Row label={<Term k="unrealized" className="pl-3">うち含み損益</Term>}><span className={upDown(summary.unrealizedPnl)}>{signedYen(summary.unrealizedPnl)}</span></Row>
+      <Row label={<Term k="realized" className="pl-3">うち確定損益</Term>}><span className={upDown(portfolio.realizedPnl)}>{signedYen(portfolio.realizedPnl)}</span></Row>
       <Row label="現金" border>{yen(portfolio.cash)}</Row>
-      <Row label="株の評価額">{yen(summary.holdingsValue)}</Row>
+      <Row label={<Term k="holdingsValue">株の評価額</Term>}>{yen(summary.holdingsValue)}</Row>
       {portfolio.borrowedAmount > 0 && (
         <>
-          <Row label="借入金"><span className="text-red-400">-{yen(portfolio.borrowedAmount)}</span></Row>
-          <Row label="維持率"><span className={ratioColor}>{(summary.marginRatio * 100).toFixed(1)}%</span></Row>
+          <Row label={<Term k="borrowed">借入金</Term>}><span className="text-red-400">-{yen(portfolio.borrowedAmount)}</span></Row>
+          <Row label={<Term k="marginRatio">維持率</Term>}><span className={ratioColor}>{(summary.marginRatio * 100).toFixed(1)}%</span></Row>
         </>
       )}
       {(mode.feeRate > 0 || mode.taxRate > 0) && (
         <div className="pt-2 mt-1 border-t border-slate-800 space-y-1 text-xs">
-          {mode.feeRate > 0 && <Row label="払った手数料">{yen(portfolio.feesPaid)}</Row>}
-          {mode.taxRate > 0 && <Row label="払った税金">{yen(portfolio.taxPaid)}</Row>}
+          {mode.feeRate > 0 && <Row label={<Term k="fee">払った手数料</Term>}>{yen(portfolio.feesPaid)}</Row>}
+          {mode.taxRate > 0 && <Row label={<Term k="tax">払った税金</Term>}>{yen(portfolio.taxPaid)}</Row>}
         </div>
       )}
     </div>
@@ -237,7 +238,7 @@ export function StockHeader({ stock, sectorName, data }) {
       <div className="flex justify-between items-start gap-4 mb-4">
         <div className="min-w-0">
           <h2 className="text-xl sm:text-2xl font-bold truncate">{stock.name}</h2>
-          <p className="text-sm text-gray-500">{sectorName}</p>
+          <p className="text-sm text-gray-500"><Term k="sector">{sectorName}</Term></p>
         </div>
         <div className="text-right tabular-nums flex-shrink-0">
           <div className="text-2xl sm:text-3xl font-bold">¥{data.price.toLocaleString()}</div>
@@ -249,13 +250,13 @@ export function StockHeader({ stock, sectorName, data }) {
       </div>
       <div className="grid grid-cols-4 gap-2 text-center tabular-nums">
         {[
-          ['始値', data.open.toLocaleString(), ''],
-          ['高値', data.high.toLocaleString(), 'text-emerald-400'],
-          ['安値', data.low.toLocaleString(), 'text-red-400'],
-          ['出来高', `${(data.volume / 1000).toFixed(1)}K`, ''],
-        ].map(([label, value, color]) => (
+          ['始値', data.open.toLocaleString(), '', 'open'],
+          ['高値', data.high.toLocaleString(), 'text-emerald-400', 'high'],
+          ['安値', data.low.toLocaleString(), 'text-red-400', 'low'],
+          ['出来高', `${(data.volume / 1000).toFixed(1)}K`, '', 'volume'],
+        ].map(([label, value, color, termKey]) => (
           <div key={label} className="bg-slate-800/60 rounded-lg py-2">
-            <div className="text-xs text-gray-500 mb-0.5">{label}</div>
+            <div className="text-xs text-gray-500 mb-0.5"><Term k={termKey}>{label}</Term></div>
             <div className={`text-sm font-semibold ${color}`}>{value}</div>
           </div>
         ))}
@@ -318,7 +319,7 @@ export function TradePanel({
   return (
     <div className="space-y-4">
       <div>
-        <label className="text-xs text-gray-400 block mb-2">株数（{LOT_SIZE}株単位）</label>
+        <div className="text-xs text-gray-400 mb-2"><Term k="lot">株数（{LOT_SIZE}株単位）</Term></div>
         <div className="flex gap-2">
           <button onClick={() => step(-LOT_SIZE)} className="w-12 bg-slate-800 border border-slate-700 rounded-xl text-xl font-bold" aria-label="100株減らす">−</button>
           <input
@@ -350,7 +351,7 @@ export function TradePanel({
 
       {mode.maxLeverage > 1 && (
         <div>
-          <label className="text-xs text-gray-400 block mb-2">レバレッジ（借金して何倍まで買うか）</label>
+          <div className="text-xs text-gray-400 mb-2"><Term k="leverage">レバレッジ（借金して何倍まで買うか）</Term></div>
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
             {Array.from({ length: mode.maxLeverage }, (_, i) => i + 1).map((lev) => (
               <button
@@ -376,7 +377,7 @@ export function TradePanel({
         </div>
         {mode.feeRate > 0 && (
           <div className="flex justify-between items-baseline text-xs text-gray-400 tabular-nums">
-            <span>手数料（{(mode.feeRate * 100).toFixed(1)}%）</span>
+            <Term k="fee">手数料（{(mode.feeRate * 100).toFixed(1)}%）</Term>
             <span>{yen(fee)}</span>
           </div>
         )}
@@ -404,8 +405,8 @@ export function TradePanel({
         {holding ? (
           <>
             <Row label="保有株数">{holding.shares.toLocaleString()}株</Row>
-            <Row label="平均取得単価">¥{Math.round(holding.avgCost).toLocaleString()}</Row>
-            <Row label="含み損益"><span className={upDown(gain)}>{signedYen(gain)}</span></Row>
+            <Row label={<Term k="avgCost">平均取得単価</Term>}>¥{Math.round(holding.avgCost).toLocaleString()}</Row>
+            <Row label={<Term k="unrealized">含み損益</Term>}><span className={upDown(gain)}>{signedYen(gain)}</span></Row>
           </>
         ) : (
           <p className="text-xs text-gray-500 text-center">この銘柄はまだ持っていません</p>
@@ -473,7 +474,7 @@ export function MarginBar({ portfolio, summary, marginCallActive }) {
       <div className="max-w-7xl mx-auto flex justify-between items-center gap-2 text-sm">
         <div className="flex items-center gap-2 font-semibold">
           <AlertOctagon size={18} className={marginCallActive ? 'text-red-400' : 'text-yellow-400'} />
-          {marginCallActive ? '追証発生中' : '信用取引中'}・維持率 {(summary.marginRatio * 100).toFixed(1)}%
+          {marginCallActive ? <Term k="marginCall">追証発生中</Term> : <Term k="leverage">信用取引中</Term>}・<Term k="marginRatio">維持率 {(summary.marginRatio * 100).toFixed(1)}%</Term>
         </div>
         <div className="tabular-nums">
           <span className="text-gray-400">借入</span>

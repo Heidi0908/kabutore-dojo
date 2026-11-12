@@ -1,10 +1,12 @@
-import { Skull } from 'lucide-react';
+import { Skull, HelpCircle } from 'lucide-react';
+import { Term, useHelp } from './help';
 import { DIFFICULTY_MODES } from '../engine/data';
 import { yen, signedYen, signed } from './parts';
 
 // 難易度選択画面
 export function StartScreen({ difficulty, setDifficulty, onStart }) {
   const mode = DIFFICULTY_MODES[difficulty];
+  const { openHelp } = useHelp();
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-gray-100 flex items-center justify-center p-4 sm:p-6 overflow-x-clip relative">
       {/* 背景装飾 */}
@@ -24,16 +26,27 @@ export function StartScreen({ difficulty, setDifficulty, onStart }) {
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
             プロの取引を学ぶ。信用取引・レバレッジ・追証まで完全再現。
           </p>
+          <button
+            onClick={() => openHelp()}
+            className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-600 text-sm text-gray-300 hover:border-amber-500 hover:text-amber-300 transition"
+          >
+            <HelpCircle size={16} />はじめての方へ：遊び方・用語集
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
           {Object.entries(DIFFICULTY_MODES).map(([key, m]) => {
             const selected = difficulty === key;
             return (
-              <button
+              // 中に「？」ボタンがあるので、カード自体は div にしてクリックできるようにする
+              <div
                 key={key}
+                role="radio"
+                aria-checked={selected}
+                tabIndex={0}
                 onClick={() => setDifficulty(key)}
-                className={`group relative text-left p-4 sm:p-8 rounded-2xl border-2 transition-all duration-300 ${
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDifficulty(key); } }}
+                className={`group relative text-left cursor-pointer p-4 sm:p-8 rounded-2xl border-2 transition-all duration-300 ${
                   selected
                     ? 'border-amber-500 bg-gradient-to-br from-slate-800/80 to-slate-900/80 shadow-2xl shadow-amber-500/20'
                     : 'border-slate-700/50 bg-slate-900/50 hover:border-slate-600 hover:bg-slate-800/50'
@@ -51,15 +64,15 @@ export function StartScreen({ difficulty, setDifficulty, onStart }) {
                   {selected && <div className="sm:hidden w-3 h-3 rounded-full bg-amber-400 animate-pulse"></div>}
                 </div>
                 <div className={`space-y-1 sm:space-y-2 text-sm ${selected ? '' : 'hidden sm:block'}`}>
-                  <Spec label="最大レバレッジ" value={`${m.maxLeverage}倍`} />
+                  <Spec label={<Term k="leverage">最大レバレッジ</Term>} value={`${m.maxLeverage}倍`} />
                   {m.marginCallThreshold > 0 && (
-                    <Spec label="追証ライン" value={`${(m.marginCallThreshold * 100).toFixed(0)}%`} valueClass="text-orange-400" />
+                    <Spec label={<Term k="marginCall">追証ライン</Term>} value={`${(m.marginCallThreshold * 100).toFixed(0)}%`} valueClass="text-orange-400" />
                   )}
-                  <Spec label="売買手数料" value={m.feeRate > 0 ? `${(m.feeRate * 100).toFixed(1)}%` : 'なし'} />
-                  <Spec label="利益への税金" value={m.taxRate > 0 ? `${(m.taxRate * 100).toFixed(3)}%` : 'なし'} />
-                  <Spec label="自己破産" value={m.canGoBankrupt ? 'あり' : 'なし'} valueClass={m.canGoBankrupt ? 'text-red-400' : 'text-gray-500'} />
+                  <Spec label={<Term k="fee">売買手数料</Term>} value={m.feeRate > 0 ? `${(m.feeRate * 100).toFixed(1)}%` : 'なし'} />
+                  <Spec label={<Term k="tax">利益への税金</Term>} value={m.taxRate > 0 ? `${(m.taxRate * 100).toFixed(3)}%` : 'なし'} />
+                  <Spec label={<Term k="bankrupt">自己破産</Term>} value={m.canGoBankrupt ? 'あり' : 'なし'} valueClass={m.canGoBankrupt ? 'text-red-400' : 'text-gray-500'} />
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -86,7 +99,7 @@ export function StartScreen({ difficulty, setDifficulty, onStart }) {
 function Spec({ label, value, valueClass = 'text-gray-300' }) {
   return (
     <div className="flex justify-between">
-      <span className="text-gray-500">{label}:</span>
+      <span className="text-gray-500">{label}</span>
       <span className={`font-semibold ${valueClass}`}>{value}</span>
     </div>
   );

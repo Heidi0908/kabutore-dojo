@@ -5,6 +5,20 @@ import { createPortfolio, summarize, buy, sell, liquidateAll } from './engine/po
 import { Toasts } from './components/parts';
 import { MobileLayout, DesktopLayout, useIsDesktop } from './components/layouts';
 import { StartScreen, BankruptScreen } from './components/screens';
+import { useHelp } from './components/help';
+
+const HELP_SEEN_KEY = 'kabutore.helpSeen';
+
+// はじめてゲームを始める人かどうか（ブラウザに記録。使えない環境では毎回「はじめて」扱いにしない）
+function isFirstVisit() {
+  try {
+    if (localStorage.getItem(HELP_SEEN_KEY)) return false;
+    localStorage.setItem(HELP_SEEN_KEY, '1');
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const NEWS_DELAY = [6000, 15000]; // ニュースが出る間隔（ミリ秒）
 
@@ -22,6 +36,7 @@ export default function KabutoredojoSimulator() {
   const [isBankrupt, setIsBankrupt] = useState(false);
   const [toasts, setToasts] = useState([]);
   const isDesktop = useIsDesktop();
+  const { openHelp } = useHelp();
 
   const marketRef = useRef(null);
   if (!marketRef.current) marketRef.current = new Market();
@@ -177,7 +192,11 @@ export default function KabutoredojoSimulator() {
 
   // ---------- 画面 ----------
   if (!gameStarted) {
-    return <StartScreen difficulty={difficulty} setDifficulty={setDifficulty} onStart={() => { resetSimulation(); setGameStarted(true); }} />;
+    return <StartScreen difficulty={difficulty} setDifficulty={setDifficulty} onStart={() => {
+          resetSimulation();
+          setGameStarted(true);
+          if (isFirstVisit()) openHelp('howto');
+        }} />;
   }
 
   if (isBankrupt) {
