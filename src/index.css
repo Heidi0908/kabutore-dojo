@@ -12,6 +12,54 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ---------- ゲームの演出 ---------- */
+@keyframes tut-pulse {
+  0%, 100% { outline-color: rgba(251, 191, 36, 1); outline-offset: 0; }
+  50% { outline-color: rgba(251, 191, 36, 0.4); outline-offset: 4px; }
+}
+.animate-tut-pulse {
+  outline: 3px solid rgba(251, 191, 36, 1);
+  animation: tut-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.animate-pop-in { animation: pop-in 0.25s ease-out; }
+
+/* 株価が変わった瞬間に光る */
+@keyframes flash-up {
+  from { background-color: rgba(16, 185, 129, 0.35); }
+  to { background-color: transparent; }
+}
+@keyframes flash-down {
+  from { background-color: rgba(239, 68, 68, 0.35); }
+  to { background-color: transparent; }
+}
+.animate-flash-up { animation: flash-up 0.7s ease-out; }
+.animate-flash-down { animation: flash-down 0.7s ease-out; }
+
+/* 売った時の「+¥12,345 利確！」 */
+@keyframes big-pop {
+  0% { opacity: 0; transform: translateY(8px) scale(0.95); }
+  15% { opacity: 1; transform: none; }
+  80% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+.animate-big-pop { animation: big-pop 1.5s ease-out forwards; }
+
+/* 実績のカードがきらっと光る */
+@keyframes shine {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+.animate-shine {
+  background-image: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.18) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: shine 1.6s ease-in-out 2;
+}
+
 /* 横スクロールのバーを隠す */
 .no-scrollbar {
   scrollbar-width: none;

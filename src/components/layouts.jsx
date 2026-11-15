@@ -3,6 +3,7 @@ import {
   Play, Pause, RotateCcw, LineChart, List, Newspaper, Wallet, Globe, DollarSign, Briefcase, History, Search, Settings2, HelpCircle,
 } from 'lucide-react';
 import { useHelp, Term } from './help';
+import { RankBadge, EffectsToggle } from './game';
 import {
   Card, PortfolioSummary, HoldingsList, TradeHistory, StockBrowser, StockHeader, PriceChart, TradePanel, NewsFeed,
   MarginBar, IndexTicker, yen, signedYen, signed, upDown,
@@ -22,13 +23,14 @@ export function useIsDesktop() {
 }
 
 function RunButton({ isRunning, onStart, onStop, large }) {
-  const size = large ? 'px-5 py-2.5 text-base' : 'px-4 py-2 text-sm';
+  // data-tut はチュートリアルで光らせるための目印
+  const size = large ? 'px-5 py-2.5 text-base' : 'px-3 py-2 text-sm';
   return isRunning ? (
-    <button onClick={onStop} className={`flex items-center gap-2 ${size} bg-red-600 hover:bg-red-700 rounded-xl font-bold transition`}>
+    <button data-tut="run" onClick={onStop} className={`flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 ${size} bg-red-600 hover:bg-red-700 rounded-xl font-bold transition`}>
       <Pause size={18} />停止
     </button>
   ) : (
-    <button onClick={onStart} className={`flex items-center gap-2 ${size} bg-emerald-600 hover:bg-emerald-700 rounded-xl font-bold transition`}>
+    <button data-tut="run" onClick={onStart} className={`flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 ${size} bg-emerald-600 hover:bg-emerald-700 rounded-xl font-bold transition`}>
       <Play size={18} />開始
     </button>
   );
@@ -53,7 +55,7 @@ const TABS = [
 
 export function MobileLayout(g) {
   const { openHelp } = useHelp();
-  const [tab, setTab] = useState('chart');
+  const { mobileTab: tab, setMobileTab: setTab } = g;
   const [seenNews, setSeenNews] = useState(0);
   const unread = tab === 'news' ? 0 : Math.max(0, g.newsCount - seenNews);
 
@@ -78,24 +80,25 @@ export function MobileLayout(g) {
   return (
     <div className="min-h-screen bg-slate-950 text-gray-100 pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
       <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800">
-        <div className="flex justify-between items-center px-4 h-14">
-          <div className="flex items-center gap-2 min-w-0">
-            <h1 className="text-lg font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent flex-shrink-0">株トレ道場</h1>
-            <span className="text-[11px] px-2 py-0.5 bg-slate-800 border border-slate-700 rounded-md text-gray-400 truncate">
-              {g.mode.icon} {g.mode.name}
+        <div className="flex justify-between items-center gap-2 px-4 h-14">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <h1 className="text-base font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent flex-shrink-0">株トレ道場</h1>
+            <RankBadge xp={g.progress.xp} onClick={g.onOpenRecord} />
+            <span className="text-[11px] px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded-md text-gray-400 truncate" title={g.mode.name}>
+              {g.mode.icon}{g.tutorialActive ? ' 練習' : ''}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => openHelp()} aria-label="ヘルプ" className="p-2.5 bg-slate-800 rounded-xl text-gray-300">
+            <button onClick={() => openHelp()} aria-label="ヘルプ" className="p-2 bg-slate-800 rounded-xl text-gray-300 flex-shrink-0">
               <HelpCircle size={18} />
             </button>
-            <button onClick={() => confirmReset(g.onReset)} aria-label="リセット" className="p-2.5 bg-slate-800 rounded-xl text-gray-300">
+            <button onClick={() => confirmReset(g.onReset)} aria-label="リセット" className="p-2 bg-slate-800 rounded-xl text-gray-300 flex-shrink-0">
               <RotateCcw size={18} />
             </button>
             <RunButton isRunning={g.isRunning} onStart={g.onStart} onStop={g.onStop} />
           </div>
         </div>
-        <button onClick={() => setTab('assets')} className="w-full flex justify-between items-center px-4 pb-2 text-left tabular-nums">
+        <button data-tut="equity" onClick={() => setTab('assets')} className="w-full flex justify-between items-center px-4 pb-2 text-left tabular-nums">
           <span className="text-xs text-gray-400">純資産 <span className="text-base font-bold text-white ml-1">{yen(g.summary.equity)}</span></span>
           <span className={`text-sm font-bold ${upDown(g.summary.pnl)}`}>
             {signedYen(g.summary.pnl)}（{signed(g.summary.pnlPercent)}%）
@@ -128,8 +131,8 @@ export function MobileLayout(g) {
               </button>
             </div>
             <Card>
-              <StockHeader stock={g.selectedStock} sectorName={g.sectors[g.selectedStock.sector].name} data={g.quote} />
-              <div className="mt-4 -mx-2">
+              <StockHeader stock={g.selectedStock} sectorName={g.sectors[g.selectedStock.sector].name} data={g.quote} flashOn={g.effects} />
+              <div data-tut="chart" className="mt-4 -mx-2">
                 <PriceChart history={g.history} height={220} avgCost={g.trade.holding?.avgCost} />
               </div>
             </Card>
@@ -180,6 +183,15 @@ export function MobileLayout(g) {
             >
               <Settings2 size={16} />難易度を選び直す
             </button>
+            <div className="flex justify-center py-1">
+              <EffectsToggle on={g.effects} onToggle={g.onToggleEffects} />
+            </div>
+            <button
+              onClick={g.onOpenRecord}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-amber-500/40 text-sm text-amber-300"
+            >
+              🏅 道場の記録（段位・実績）
+            </button>
             <button
               onClick={() => openHelp()}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-slate-700 text-sm text-gray-400"
@@ -226,6 +238,7 @@ export function DesktopLayout(g) {
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-16 gap-6">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">株トレ道場</h1>
+            <RankBadge xp={g.progress.xp} onClick={g.onOpenRecord} size="lg" />
             <button
               onClick={() => confirmChangeMode(g.onChangeMode)}
               title="難易度を選び直す"
@@ -234,9 +247,10 @@ export function DesktopLayout(g) {
               {g.mode.icon} {g.mode.name}
             </button>
             <IndexTicker index={g.index} className="ml-4" />
+            <span className="ml-3"><EffectsToggle on={g.effects} onToggle={g.onToggleEffects} compact /></span>
           </div>
           <div className="flex items-center gap-6">
-            <div className="text-right tabular-nums">
+            <div data-tut="equity" className="text-right tabular-nums">
               <div className="text-xs text-gray-400"><Term k="equity">純資産</Term></div>
               <div className="text-lg font-bold leading-tight">{yen(g.summary.equity)}</div>
             </div>
@@ -279,10 +293,12 @@ export function DesktopLayout(g) {
 
         <main className="col-span-6 space-y-4">
           <Card>
-            <StockHeader stock={g.selectedStock} sectorName={g.sectors[g.selectedStock.sector].name} data={g.quote} />
+            <StockHeader stock={g.selectedStock} sectorName={g.sectors[g.selectedStock.sector].name} data={g.quote} flashOn={g.effects} />
           </Card>
           <Card title="リアルタイムチャート（直近2分）">
+            <div data-tut="chart">
             <PriceChart history={g.history} height={300} avgCost={g.trade.holding?.avgCost} />
+            </div>
           </Card>
           <Card title="取引">
             <TradePanel {...g.trade} />

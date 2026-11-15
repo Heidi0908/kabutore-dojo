@@ -101,15 +101,18 @@ export class Market {
   }
 
   // ニュースを1つ発生させて株価に反映し、ニュースの内容を返す
-  generateNews(strength = 1) {
-    const event = pickWeighted(NEWS_EVENTS);
-    const base = rand(event.impact[0], event.impact[1]) * strength;
+  // forced を渡すと、決まったニュースを出す（チュートリアル用）: { event, symbol, impact }
+  generateNews(strength = 1, forced = null) {
+    const event = forced?.event ?? pickWeighted(NEWS_EVENTS);
+    const base = forced?.impact ?? rand(event.impact[0], event.impact[1]) * strength;
     let text = event.text;
     let targetLabel = '市場全体';
     const affected = []; // { symbol, impact }
 
     if (event.scope === 'stock') {
-      const stock = STOCKS[Math.floor(Math.random() * STOCKS.length)];
+      const stock = forced?.symbol
+        ? STOCKS.find((s) => s.symbol === forced.symbol)
+        : STOCKS[Math.floor(Math.random() * STOCKS.length)];
       text = text.replace('{company}', stock.name);
       targetLabel = stock.name;
       affected.push({ symbol: stock.symbol, impact: base });

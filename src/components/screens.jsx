@@ -1,12 +1,15 @@
 import { Skull, HelpCircle } from 'lucide-react';
 import { Term, useHelp } from './help';
 import { DIFFICULTY_MODES } from '../engine/data';
+import { ACHIEVEMENTS, unlockedCount } from '../engine/progress';
 import { yen, signedYen, signed } from './parts';
+import { RankBadge, RankProgress, EffectsToggle } from './game';
 
 // 難易度選択画面
-export function StartScreen({ difficulty, setDifficulty, onStart }) {
+export function StartScreen({ difficulty, setDifficulty, onStart, onTutorial, progress, onOpenRecord, effects, onToggleEffects }) {
   const mode = DIFFICULTY_MODES[difficulty];
   const { openHelp } = useHelp();
+  const isNewcomer = !progress.tutorialDone;
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-gray-100 flex items-center justify-center p-4 sm:p-6 overflow-x-clip relative">
       {/* 背景装飾 */}
@@ -26,13 +29,54 @@ export function StartScreen({ difficulty, setDifficulty, onStart }) {
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
             プロの取引を学ぶ。信用取引・レバレッジ・追証まで完全再現。
           </p>
-          <button
-            onClick={() => openHelp()}
-            className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-600 text-sm text-gray-300 hover:border-amber-500 hover:text-amber-300 transition"
-          >
-            <HelpCircle size={16} />はじめての方へ：遊び方・用語集
-          </button>
         </div>
+
+        {/* チュートリアルと道場の記録 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10">
+          <button
+            onClick={onTutorial}
+            className={`relative text-left p-5 rounded-2xl border-2 transition ${
+              isNewcomer
+                ? 'border-emerald-400 bg-emerald-500/10 shadow-xl shadow-emerald-500/20 hover:bg-emerald-500/15'
+                : 'border-slate-700/50 bg-slate-900/50 hover:border-slate-600'
+            }`}
+          >
+            {isNewcomer && (
+              <span className="absolute -top-3 left-4 px-2 py-0.5 rounded-full bg-emerald-400 text-slate-950 text-xs font-bold animate-pulse">
+                はじめての方はこちら
+              </span>
+            )}
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-amber-300 to-amber-600 flex items-center justify-center text-3xl shadow-lg">🥋</div>
+              <div>
+                <div className="text-lg font-bold">🔰 チュートリアル</div>
+                <div className="text-sm text-gray-400">師範と一緒に、買って・売って・利益を出すまで（約3分）</div>
+              </div>
+            </div>
+          </button>
+
+          <div className="p-5 rounded-2xl border-2 border-slate-700/50 bg-slate-900/50 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-bold">あなたの段位</span>
+              <RankBadge xp={progress.xp} size="lg" />
+            </div>
+            <RankProgress xp={progress.xp} />
+            <EffectsToggle on={effects} onToggle={onToggleEffects} compact />
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-gray-500">実績 {unlockedCount(progress)} / {ACHIEVEMENTS.length}</span>
+              <div className="flex gap-2">
+                <button onClick={() => openHelp()} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-600 text-xs text-gray-300 hover:border-amber-500">
+                  <HelpCircle size={14} />遊び方・用語集
+                </button>
+                <button onClick={onOpenRecord} className="px-3 py-1.5 rounded-lg border border-amber-500/40 text-xs text-amber-300 hover:bg-amber-500/10">
+                  🏅 道場の記録
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h2 className="text-center text-sm font-semibold text-gray-400 mb-4">本番：難易度を選んでスタート</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
           {Object.entries(DIFFICULTY_MODES).map(([key, m]) => {

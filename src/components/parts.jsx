@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, ComposedChart } from 'recharts';
 import {
-  TrendingUp, TrendingDown, AlertTriangle, CheckCircle, AlertOctagon, Info, XCircle, Search,
+  TrendingUp, TrendingDown, AlertTriangle, CheckCircle, AlertOctagon, Info, XCircle, Search, Trophy,
 } from 'lucide-react';
 import { LOT_SIZE } from '../engine/data';
 import { tradeFee } from '../engine/portfolio';
@@ -232,7 +232,16 @@ export function StockList({ stocks, sectors, quotes, holdings, selectedSymbol, o
 
 // ---------- 銘柄情報・チャート ----------
 
-export function StockHeader({ stock, sectorName, data }) {
+export function StockHeader({ stock, sectorName, data, flashOn = true }) {
+  // 株価が上がったら緑、下がったら赤に一瞬光らせる
+  const prev = useRef({ symbol: stock.symbol, price: data.price, flash: '', n: 0 });
+  if (prev.current.symbol !== stock.symbol) {
+    prev.current = { symbol: stock.symbol, price: data.price, flash: '', n: prev.current.n };
+  } else if (data.price !== prev.current.price) {
+    prev.current = { ...prev.current, flash: data.price > prev.current.price ? 'animate-flash-up' : 'animate-flash-down', price: data.price, n: prev.current.n + 1 };
+  }
+  const { n } = prev.current;
+  const flash = flashOn ? prev.current.flash : '';
   return (
     <div>
       <div className="flex justify-between items-start gap-4 mb-4">
@@ -241,7 +250,7 @@ export function StockHeader({ stock, sectorName, data }) {
           <p className="text-sm text-gray-500"><Term k="sector">{sectorName}</Term></p>
         </div>
         <div className="text-right tabular-nums flex-shrink-0">
-          <div className="text-2xl sm:text-3xl font-bold">¥{data.price.toLocaleString()}</div>
+          <div key={n} className={`text-2xl sm:text-3xl font-bold rounded-lg px-1 -mx-1 ${flash}`}>¥{data.price.toLocaleString()}</div>
           <div className={`text-base font-semibold flex items-center justify-end gap-1 ${upDown(data.change)}`}>
             {data.change >= 0 ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
             {signed(data.change)}%
@@ -385,6 +394,7 @@ export function TradePanel({
 
       <div className="grid grid-cols-2 gap-3">
         <button
+          data-tut="buy"
           onClick={onBuy}
           disabled={!isRunning || tradeAmount <= 0}
           className="py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] disabled:bg-slate-700 disabled:text-gray-400 disabled:cursor-not-allowed rounded-xl font-bold text-base transition"
@@ -392,6 +402,7 @@ export function TradePanel({
           買う
         </button>
         <button
+          data-tut="sell"
           onClick={onSell}
           disabled={!isRunning || tradeAmount <= 0}
           className="py-4 bg-red-600 hover:bg-red-700 active:scale-[0.98] disabled:bg-slate-700 disabled:text-gray-400 disabled:cursor-not-allowed rounded-xl font-bold text-base transition"
@@ -401,7 +412,7 @@ export function TradePanel({
       </div>
       {!isRunning && <p className="text-xs text-center text-gray-500">取引するには上の「開始」を押してください</p>}
 
-      <div className="pt-3 border-t border-slate-800 text-sm space-y-1">
+      <div data-tut="holding" className="pt-3 border-t border-slate-800 text-sm space-y-1">
         {holding ? (
           <>
             <Row label="保有株数">{holding.shares.toLocaleString()}株</Row>
@@ -493,6 +504,7 @@ const TOAST_STYLE = {
   warning: ['bg-orange-900/95 border-orange-500', AlertTriangle, 'text-orange-300'],
   critical: ['bg-red-900/95 border-red-500', AlertOctagon, 'text-red-300'],
   info: ['bg-slate-800/95 border-slate-500', Info, 'text-sky-300'],
+  achievement: ['bg-gradient-to-r from-amber-900/95 to-slate-900/95 border-amber-400 animate-shine font-semibold', Trophy, 'text-amber-300'],
 };
 
 export function Toasts({ toasts }) {
